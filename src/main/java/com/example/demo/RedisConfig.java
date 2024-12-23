@@ -5,5 +5,5 @@ import org.springframework.session.data.redis.config.annotation.web.http.EnableR
 
 @Configuration
 @EnableRedisHttpSession(maxInactiveIntervalInSeconds = 1800) // 세션 유효시간 30분
-public class RedisSessionConfig {
+public class RedisConfig {
 }
