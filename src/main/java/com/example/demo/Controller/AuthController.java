@@ -32,9 +32,7 @@ public class AuthController {
     public RedirectView login(@RequestParam String phoneNumber) {
         userService.findOrCreateUser(phoneNumber);
         authService.sendVerificationCode(phoneNumber);
-        RedirectView redirectView = new RedirectView();
-        redirectView.setUrl("/verify");
-        return redirectView;
+        return new RedirectView("/verify");
     }
 
     @GetMapping("verify")
@@ -45,11 +43,12 @@ public class AuthController {
     @PostMapping("/verify")
     public RedirectView verify(@RequestParam String phoneNumber, @RequestParam String code) {
         RedirectView redirectView = new RedirectView();
+
         if (authService.verifyCode(phoneNumber, code)) {
             httpSession.setAttribute("phoneNumber", phoneNumber);
             redirectView.setUrl("/dashboard");
         } else {
-            redirectView.setUrl("/login?error=invalid_code");
+            redirectView.setUrl("/login");
         }
         return redirectView;
     }

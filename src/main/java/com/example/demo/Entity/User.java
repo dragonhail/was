@@ -20,5 +20,5 @@ public class User {
     private String phoneNumber;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<CoinPrice> coinPrices = new ArrayList<>();
+    private List<CoinPrice> coinPrices;
 }

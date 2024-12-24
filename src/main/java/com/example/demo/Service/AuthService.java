@@ -15,13 +15,14 @@ public class AuthService {
 
     public String sendVerificationCode(String phoneNumber) {
         String code = String.valueOf(new Random().nextInt(900000) + 100000);
-        redisTemplate.opsForValue().set("auth:code:" + phoneNumber, code, 5, TimeUnit.MINUTES);
+        redisTemplate.opsForValue().set(code, phoneNumber, 5, TimeUnit.MINUTES);
         // 메시지 전송 로직 추가 (예: Twilio)
         return code;
     }
 
     public boolean verifyCode(String phoneNumber, String code) {
-        String savedCode = redisTemplate.opsForValue().get("auth:code:" + phoneNumber);
+        String savedCode = redisTemplate.opsForValue().get(code);
         return code.equals(savedCode);
+
     }
 }
