@@ -25,7 +25,7 @@ public class AuthController {
 
     @GetMapping("/login")
     public String login() {
-        return "login";
+        return "로그인화면";
     }
 
     @PostMapping("/login")
@@ -37,12 +37,13 @@ public class AuthController {
 
     @GetMapping("verify")
     public String verify() {
-        return "verify";
+        return "인증번호 입력화면";
     }
 
     @PostMapping("/verify")
-    public RedirectView verify(@RequestParam String phoneNumber, @RequestParam String code) {
+    public RedirectView verify(@RequestParam String code) {
         RedirectView redirectView = new RedirectView();
+        String phoneNumber = authService.verifyCodeByCodeOnlyEfficient(code);
 
         if (authService.verifyCode(phoneNumber, code)) {
             httpSession.setAttribute("phoneNumber", phoneNumber);
