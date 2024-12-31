@@ -9,10 +9,8 @@ import lombok.Data;
 @Builder
 public class FavoriteRequest {
     private String coinName;
-    private Long userId;
 
     public FavoriteRequest(Favorite favorite) {
-        this.userId = favorite.getId();
         this.coinName = favorite.getCoinName();
     }
 }

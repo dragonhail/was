@@ -12,11 +12,12 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final CoinPriceRepository coinPriceRepository;
     private final FavoriteRepository favoriteRepository;
 
     public User findOrCreateUser(String phoneNumber) {
         return userRepository.findByPhoneNumber(phoneNumber)
-                .orElseGet(() -> userRepository.save(new User(phoneNumber, new ArrayList<>())));
+                .orElseGet(() -> userRepository.save(new User(phoneNumber)));
     }
 
     public User findByPhoneNumber(String phoneNumber) {
@@ -26,7 +27,11 @@ public class UserService {
 
     public void addCoinPrice(String phoneNumber, String coinName, double price) {
         User user = findByPhoneNumber(phoneNumber);
-        user.getCoinPrices().add(new CoinPrice(null, coinName, price, user));
-        userRepository.save(user);
+        coinPriceRepository.save(new CoinPrice(null, coinName, price, user));
+    }
+
+    public void addFavorite(String phoneNumber, String coinName) {
+        User user = findByPhoneNumber(phoneNumber);
+        favoriteRepository.save(new Favorite(null, coinName, user));
     }
 }

@@ -4,10 +4,8 @@ import com.example.demo.Entity.*;
 import com.example.demo.Service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.Response;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,42 +14,39 @@ import java.util.List;
 
 @Component
 @RestController
-@RequestMapping("/")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class DashboardController {
-    private final KafkaTemplate<String, String> kafkaTemplate;
-
     HttpSession httpSession;
     private final UserService userService;
-    private final FavoriteRepository favoriteRepository;
 
     @GetMapping("/target-price")
     public ResponseEntity<?> viewDashboard(HttpSession session) {
+        if (session==null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 하세요");
+        }
         String phoneNumber = (String) session.getAttribute("phoneNumber");
         if (phoneNumber == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 하세요");
         }
         User user = userService.findByPhoneNumber(phoneNumber);
-        // Convert CoinPrice entities to DTOs using a for loop
-        List<CoinPriceDTO> coinPriceDTOs = new ArrayList<>();
-        for (CoinPrice coinPrice : user.getCoinPrices()) {
-            coinPriceDTOs.add(new CoinPriceDTO(coinPrice));
+        List<CoinPriceDTO> coinPriceDTOS = new ArrayList<>();
+
+        List<CoinPrice> coinPrices = user.getCoinPrices();
+        for (CoinPrice coinPrice : coinPrices) {
+            coinPriceDTOS.add(new CoinPriceDTO(coinPrice));
         }
-        return ResponseEntity.ok(coinPriceDTOs);
+        return ResponseEntity.ok(coinPriceDTOS);
     }
 
     @PostMapping("/target-price")
-    public ResponseEntity<?> addCoin(HttpSession session, @RequestParam String coinName, @RequestParam double price) {
+    public ResponseEntity<?> addCoin(HttpSession session, String coinName, double price) {
         String phoneNumber = (String) session.getAttribute("phoneNumber");
         if (phoneNumber == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 하세요");
         }
-
-        kafkaTemplate.send("price-watch", "add:"+coinName + ":" + price);
-        // RDBMS에 사용자 코인 정보 추가
         userService.addCoinPrice(phoneNumber, coinName, price);
-
-        return ResponseEntity.ok().body("가격 지정 되었습니다");
+        return ResponseEntity.status(HttpStatus.CREATED).body("코인 가격 지정 성공");
     }
 
     @GetMapping("favorites")
@@ -60,20 +55,19 @@ public class DashboardController {
         if (phoneNumber == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 하세요");
         }
+        User user = userService.findByPhoneNumber(phoneNumber);
+        List<FavoriteRequest> favoriteRequests = new ArrayList<>();
 
-        // phoneNumber로 사용자 선호 코인 목록 조회
-        List<Favorite> favorites = favoriteRepository.findFavoriteByPhoneNumber(phoneNumber);
-
-        // Favorite을 FavoriteRequest로 변환
-        List<FavoriteRequest> favoriteDTOs = new ArrayList<>();
+        // 사용자에 해당하는 favorite 리스트를 가져와서 FavoriteRequest로 변환
+        List<Favorite> favorites = user.getFavorites();
         for (Favorite favorite : favorites) {
-            favoriteDTOs.add(new FavoriteRequest(favorite));
+            favoriteRequests.add(new FavoriteRequest(favorite));
         }
-        return ResponseEntity.ok(favoriteDTOs);
+        return ResponseEntity.ok(favoriteRequests);
     }
 
     @PostMapping("favorites")
-    public ResponseEntity<?> addFavorite(HttpSession session, @RequestBody FavoriteRequest favoriteRequest) {
+    public ResponseEntity<?> addFavorite(HttpSession session, @RequestParam String coinName) {
         String phoneNumber = (String) session.getAttribute("phoneNumber");
         if (phoneNumber == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인 하세요");
@@ -82,14 +76,7 @@ public class DashboardController {
         if (user == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("사용자를 찾을 수 없습니다.");
         }
-
-        // Favorite 객체 생성
-        Favorite favorite = new Favorite();
-        favorite.setUser(user); // 현재 사용자와 연관
-        favorite.setCoinName(favoriteRequest.getCoinName()); // FavoriteRequest에서 코인 이름 설정
-
-        // Favorite 저장
-        favoriteRepository.save(favorite);
-        return ResponseEntity.ok().body("Favorites Posted");
+        userService.addFavorite(phoneNumber, coinName);
+        return ResponseEntity.ok("생성되었습니다");
     }
 }

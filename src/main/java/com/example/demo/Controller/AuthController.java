@@ -11,6 +11,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 @RestController
 @RequiredArgsConstructor
+@RequestMapping("/api")
 public class AuthController {
 
     private final UserService userService;
@@ -47,10 +48,10 @@ public class AuthController {
         if (authService.verifyCode(phoneNumber, code)) {
             httpSession.setAttribute("phoneNumber", phoneNumber);
             return ResponseEntity.ok()
-                    .body("Verified");
+                    .body("인증 성공");
         } else {
             return ResponseEntity.status(400)
-                    .body("Failed to verify code. Please try again.");
+                    .body("인증 실패");
         }
     }
 
