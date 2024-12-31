@@ -13,21 +13,21 @@ public class AuthService {
 
     private final RedisTemplate<String, String> redisTemplate;
 
-    public String sendVerificationCode(String phoneNumber) {
+    public Boolean sendVerificationCode(String phoneNumber) {
         String code = String.valueOf(new Random().nextInt(900000) + 100000);
         redisTemplate.opsForValue().set(phoneNumber, code, 5, TimeUnit.MINUTES);
         redisTemplate.opsForHash().put("CodeToPhoneMap", code, phoneNumber); // 코드 -> 전화번호 매핑 추가
         redisTemplate.expire("CodeToPhoneMap", 5, TimeUnit.MINUTES); // 해시맵에도 동일한 TTL 설정
         // 메시지 전송 로직 추가 (예: Twilio)
-        return code;
+        return Boolean.TRUE;
     }
 
     public boolean verifyCode(String phoneNumber, String code) {
         String savedCode = redisTemplate.opsForValue().get(phoneNumber);
         return code.equals(savedCode);
     }
+
     public String verifyCodeByCodeOnlyEfficient(String code) {
         return (String) redisTemplate.opsForHash().get("CodeToPhoneMap", code); // 코드로 전화번호 검색
     }
-
 }

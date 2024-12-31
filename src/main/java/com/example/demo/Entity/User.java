@@ -11,14 +11,15 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class User {
-
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
     @Column(unique = true, nullable = false)
     private String phoneNumber;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    // 사용자 지정 코인 가격
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     private List<CoinPrice> coinPrices;
+
+    // 사용자 선호 코인
+    // @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    // private List<Favorite> favorites = new ArrayList<>();
 }

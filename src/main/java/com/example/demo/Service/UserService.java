@@ -1,22 +1,22 @@
 package com.example.demo.Service;
 
-import com.example.demo.Entity.CoinPrice;
-import com.example.demo.Entity.User;
-import com.example.demo.Entity.UserRepository;
+import com.example.demo.Entity.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
 
     private final UserRepository userRepository;
+    private final FavoriteRepository favoriteRepository;
 
     public User findOrCreateUser(String phoneNumber) {
         return userRepository.findByPhoneNumber(phoneNumber)
-                .orElseGet(() -> userRepository.save(new User(null, phoneNumber, new ArrayList<>())));
+                .orElseGet(() -> userRepository.save(new User(phoneNumber, new ArrayList<>())));
     }
 
     public User findByPhoneNumber(String phoneNumber) {

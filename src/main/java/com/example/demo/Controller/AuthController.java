@@ -5,6 +5,7 @@ import com.example.demo.Entity.User;
 import com.example.demo.Service.UserService;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.view.RedirectView;
 
@@ -17,40 +18,48 @@ public class AuthController {
     private final HttpSession httpSession;
 
     @GetMapping("/")
-    public RedirectView home() {
-        RedirectView redirectView = new RedirectView();
-        redirectView.setUrl(httpSession.getAttribute("phoneNumber") != null ? "/dashboard" : "/login");
-        return redirectView;
-    }
-
-    @GetMapping("/login")
-    public String login() {
-        return "로그인화면";
+    public ResponseEntity<?> home() {
+        if (httpSession.getAttribute("user") != null) {
+            return ResponseEntity.ok().body("Already Logged In");
+        }
+        return ResponseEntity.ok().body("You are logged in");
     }
 
     @PostMapping("/login")
-    public RedirectView login(@RequestParam String phoneNumber) {
+    public ResponseEntity<?> login(@RequestParam String phoneNumber) {
         userService.findOrCreateUser(phoneNumber);
-        authService.sendVerificationCode(phoneNumber);
-        return new RedirectView("/verify");
-    }
-
-    @GetMapping("verify")
-    public String verify() {
-        return "인증번호 입력화면";
+        boolean isCodeSent = authService.sendVerificationCode(phoneNumber);
+        if (isCodeSent) {
+            return ResponseEntity.ok()
+                    .body("Verification code sent successfully. Please check your phone.");
+        } else {
+            // 인증 코드 전송에 실패한 경우 오류 메시지 반환
+            return ResponseEntity.status(400)
+                    .body("Failed to send verification code. Please try again.");
+        }
     }
 
     @PostMapping("/verify")
-    public RedirectView verify(@RequestParam String code) {
+    public ResponseEntity<?> verify(@RequestParam String code) {
         RedirectView redirectView = new RedirectView();
         String phoneNumber = authService.verifyCodeByCodeOnlyEfficient(code);
 
         if (authService.verifyCode(phoneNumber, code)) {
             httpSession.setAttribute("phoneNumber", phoneNumber);
-            redirectView.setUrl("/dashboard");
+            return ResponseEntity.ok()
+                    .body("Verified");
         } else {
-            redirectView.setUrl("/login");
+            return ResponseEntity.status(400)
+                    .body("Failed to verify code. Please try again.");
         }
-        return redirectView;
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        if (httpSession != null) {
+            httpSession.invalidate(); // 세션 무효화
+        }
+        return ResponseEntity.ok().body("Logged out successfully.");
+    }
+
 }
